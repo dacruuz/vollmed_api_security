@@ -6,8 +6,12 @@ import med.voll.web_application.domain.medico.DadosCadastroMedico;
 import med.voll.web_application.domain.medico.DadosListagemMedico;
 import med.voll.web_application.domain.medico.Especialidade;
 import med.voll.web_application.domain.medico.MedicoService;
+import med.voll.web_application.domain.usuario.Perfil;
+import med.voll.web_application.domain.usuario.Usuario;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -21,6 +25,7 @@ public class MedicoController {
 
     private static final String PAGINA_LISTAGEM = "medico/listagem-medicos";
     private static final String PAGINA_CADASTRO = "medico/formulario-medico";
+    private static final String PAGINA_ERRO = "erro/500";
     private static final String REDIRECT_LISTAGEM = "redirect:/medicos?sucesso";
 
     private final MedicoService service;
@@ -35,13 +40,15 @@ public class MedicoController {
     }
 
     @GetMapping
-    public String carregarPaginaListagem(@PageableDefault Pageable paginacao, Model model) {
+    @PreAuthorize("hasRole('ATENDENTE') OR hasRole('PACIENTE')") // Serve para olhar cada rota e exibi-lá ou não baseado no perfil do usuário.
+    public String carregarPaginaListagem(@PageableDefault Pageable paginacao, Model model, @AuthenticationPrincipal Usuario logado) {
         var medicosCadastrados = service.listar(paginacao);
         model.addAttribute("medicos", medicosCadastrados);
         return PAGINA_LISTAGEM;
     }
 
     @GetMapping("formulario")
+    @PreAuthorize("hasRole('ATENDENTE')") // Serve para olhar cada rota e exibi-lá ou não baseado no perfil do usuário.
     public String carregarPaginaCadastro(Long id, Model model) {
         if (id != null) {
             model.addAttribute("dados", service.carregarPorId(id));
@@ -53,6 +60,7 @@ public class MedicoController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ATENDENTE')") // Serve para olhar cada rota e exibi-lá ou não baseado no perfil do usuário.
     public String cadastrar(@Valid @ModelAttribute("dados") DadosCadastroMedico dados, BindingResult result, Model model) {
         if (result.hasErrors()) {
             model.addAttribute("dados", dados);
@@ -70,6 +78,7 @@ public class MedicoController {
     }
 
     @DeleteMapping
+    @PreAuthorize("hasRole('ATENDENTE')") // Serve para olhar cada rota e exibi-lá ou não baseado no perfil do usuário.
     public String excluir(Long id) {
         service.excluir(id);
         return REDIRECT_LISTAGEM;
