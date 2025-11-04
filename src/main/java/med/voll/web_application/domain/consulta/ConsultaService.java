@@ -5,10 +5,12 @@ import med.voll.web_application.domain.RegraDeNegocioException;
 import med.voll.web_application.domain.medico.MedicoRepository;
 import med.voll.web_application.domain.paciente.Paciente;
 import med.voll.web_application.domain.paciente.PacienteRepository;
+import med.voll.web_application.domain.usuario.Perfil;
 import med.voll.web_application.domain.usuario.Usuario;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 
@@ -26,10 +28,11 @@ public class ConsultaService {
     }
 
     public Page<DadosListagemConsulta> listar(Pageable paginacao, Usuario logado) {
-        if (logado.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ATENDENTE")))
+//        if (logado.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ATENDENTE")))
+        if(logado.getPerfil() == Perfil.ATENDENTE)
             return repository.findAllByOrderByData(paginacao).map(DadosListagemConsulta::new);
 
-        return repository.findAllByOrderByData(paginacao).map(DadosListagemConsulta::new);
+        return repository.buscaPersonalizadaConsultas(logado.getId(), paginacao).map(DadosListagemConsulta::new);
     }
 
     @Transactional
